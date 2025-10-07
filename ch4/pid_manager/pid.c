@@ -1,3 +1,5 @@
+// THE PROGRAM IS A FOLLOW-UP TO PROGRAM FROM CH3, ONLY MAIN IS DIFFERENT FROM THE ORIGINAL //
+
 #include <limits.h>    /* for CHAR_BIT */
 #include <stdint.h>   /* for uint32_t */
 #include <stdio.h>
@@ -7,7 +9,7 @@
 
 #define THREADS_NUM 100
 
-/* enum is better than #define as it enables type checking, could obey scope rules*/
+/* enum is better than #define as it enables type checking, could obey scope rules (whaterver that means here) */
 // enum {BITS_PER_WORD = sizeof(uint64_t) * CHAR_BIT};
 static const int BITS_PER_WORD = sizeof(uint64_t) * CHAR_BIT;
 
@@ -102,6 +104,7 @@ void print_binary() {
     printf("\n------\n");
 }
 
+// atomic type ensures that the acnt value is read/modified by only one thread at the time
 _Atomic int acnt;
 
 void* createThread(void *arg){
@@ -110,7 +113,7 @@ void* createThread(void *arg){
     return NULL;
 }
 
-/* main function that showcase allocation */
+/* main function that showcase pid allocation using threads*/
 int main(void){
 
     pthread_t thread_arr[100];

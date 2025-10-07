@@ -12,8 +12,15 @@
 #include <signal.h>
 #include <pthread.h>
 
+
 #define SERVER_PORT 3990
 
+// variable that defines server state.
+// the static limits the variable visibility, volatile forces the compiler to reload the value every time,
+// it disables the compiler optimizations on that varaible. The sig_atomic_int ensures the reading/writing
+// of the value cannot be interrupted . for ex. if we use ctr+c while the is_running is being read by the 
+// program, it will read it properly and then the value will be updated (no partial/dirty read).
+// it is worth noting this is made for signals, not threads, thread atomicity is ensured with _Atomic.
 static volatile sig_atomic_t is_running = 1;
 
 struct ClientData {
@@ -24,74 +31,96 @@ struct ClientData {
 void intHandler(int running);
 void* handleRequest(void *arg);
 
+/* server that waits for a request and sends the current date */
 int main(void)
-{
-    struct sockaddr_in server_sck = {
+{   
+    //create the server address
+    struct sockaddr_in server_addr = {
         .sin_family = AF_INET,
         .sin_port = htons(SERVER_PORT),
         .sin_addr.s_addr = inet_addr("127.0.0.1"), // INADDR_ANY for my real ip
     };
-    memset(&server_sck.sin_zero, '\0', 8);
 
     int sck_fd;
+
+    memset(&server_addr.sin_zero, '\0', 8);
+
+    // create a socket file descriptor
     if ((sck_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1){
         perror("socket");
         exit(1);
     }
 
-    if (bind(sck_fd, (struct sockaddr *)&server_sck,  sizeof(server_sck)) == -1){
+    // bind a socket to a local address specified in server_sck
+    if (bind(sck_fd, (struct sockaddr *)&server_addr,  sizeof(server_addr)) == -1){
         perror("bind");
         exit(1);
     }
 
+    // open the socket to listen for connections with the queue of size 2
     if (listen(sck_fd, 2) == -1){
         perror("listen");
         exit(1);
     }
 
+    // bind sigint signal (ctrl +  C) to handler
+    signal(SIGINT, intHandler);
+
+    // run the server 
     while (is_running){
         pthread_t service_thread;
-
         struct ClientData client_data;
 
         socklen_t sin_size = sizeof(struct sockaddr);
 
+        // accept connection from a client and assign the address to a variable 
         client_data.client_fd = accept(sck_fd, (struct sockaddr *)&client_data.client_addr, &sin_size);
 
+        // create a thread that will serve the request
         if (pthread_create(&service_thread, NULL, handleRequest ,&client_data) != 0){
             perror("pthread_create");
         } else {
             printf("thread created\n");
 
+            // wait for thread to finish serving the client 
             if (pthread_join(service_thread, NULL) != 0){
                 perror("error while terminating a thread");
             };
             printf("thread terminated successfully\n");
         }
     }
+
+    // close the server socket file descriptor 
     close(sck_fd);
     return 0;
 }
 
+// handler for sigint
 void intHandler(int sig){
     is_running = 0;
 }
 
+// thread function that handles the client request
 void* handleRequest(void *arg){
 
     struct ClientData data = *(struct ClientData*)arg;
     struct sockaddr_in client_addr = data.client_addr; 
     char *sclient_addr = inet_ntoa(client_addr.sin_addr);
+    time_t currTime;
+    char *scurr_Time;
+    ssize_t send_bytes;
+
     printf("got connection from ip %s \n", sclient_addr);
 
-    time_t currTime;
+    // get the current time
     time(&currTime);
-    char *scurr_Time;
+    
+    // cast to char
     scurr_Time = ctime(&currTime);
 
     printf("current time %s\n", scurr_Time);
 
-    ssize_t send_bytes;
+    // send date to the client 
     if ((send_bytes = send(data.client_fd, scurr_Time, 25, 0)) == -1){
         perror("send");
         exit(1);

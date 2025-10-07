@@ -17,6 +17,7 @@ void* get_max(void *arg);
 void* get_min(void *arg);
 void* get_avg(void *arg);
 
+/* program that finds the mean, max and avg od provided numbers */
 int main(int argc, char *argv[])
 {   
     int *arr = malloc(4 * (argc - 1));
@@ -44,6 +45,7 @@ int main(int argc, char *argv[])
 
     printf("\n");
 
+    // basic struct for args
     struct BasicArgs args = {
         .n = argc - 1,
         .arr = arr,
@@ -64,10 +66,12 @@ int main(int argc, char *argv[])
         .p = &avg_val,
     };
 
+    // run threads 
     pthread_create(&max_thread, NULL, get_max, &max_args);
     pthread_create(&min_thread, NULL, get_min, &min_args);
     pthread_create(&avg_thread, NULL, get_avg, &avg_args);
 
+    // wait for all threads to finish
     pthread_join(max_thread, NULL);
     pthread_join(min_thread, NULL);
     pthread_join(avg_thread, NULL);
@@ -76,6 +80,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+// thread functions are required to return void* type and accept void* argument for flexibility
 void* get_max(void *arg)
 {   
     struct Args *args = arg;

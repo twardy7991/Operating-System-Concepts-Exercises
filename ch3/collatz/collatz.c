@@ -4,11 +4,14 @@
 #include <sys/wait.h>
 #include <stdlib.h>
 
+/* program is calculating the collatz conjecture using child process */
 int main(int argc, char *argv[]){
+
     if (argc <= 1){
         printf("no arguments provided \n");
         return -1;
     }
+
     int n = atoi(argv[1]);
 
     if (!(n > 0)){
@@ -17,6 +20,8 @@ int main(int argc, char *argv[]){
     }
 
     printf("starting number: %i \n", n);
+
+    // create child 
     int pid = fork();
 
     if (pid < 0){
@@ -24,6 +29,7 @@ int main(int argc, char *argv[]){
         return -1;
     } else if(pid == 0)
     {
+        // calculate the convergence
         while (n != 1){
             if (n % 2 == 0){
                 n = n / 2; 
@@ -35,6 +41,7 @@ int main(int argc, char *argv[]){
         }
     }
     else {
+        // wait for the child to finish calculating
         wait(NULL);
         printf("\ncollatz reached \n");
     }

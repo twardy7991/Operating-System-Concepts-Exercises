@@ -7,6 +7,7 @@
 double *get_random(int min, int max);
 int is_in(double x, double y);
 
+/* program aims to calculate the value of pi with monte carlo method */
 int main(void){
 
     double **arr = malloc(POINTS * sizeof(double *));
