@@ -1,0 +1,12 @@
+20 ms : executed T1 for 20 ms 
+40 ms : executed T2 for 20 ms 
+60 ms : executed T3 for 20 ms 
+75 ms : executed T4 for 15 ms 
+95 ms : executed T5 for 20 ms 
+105 ms : executed T6 for 10 ms 
+125 ms : executed T7 for 20 ms 
+145 ms : executed T8 for 20 ms 
+150 ms : executed T2 for 5 ms 
+155 ms : executed T3 for 5 ms 
+165 ms : executed T7 for 10 ms 
+170 ms : executed T8 for 5 ms 
