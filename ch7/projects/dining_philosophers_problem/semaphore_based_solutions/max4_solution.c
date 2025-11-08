@@ -1,5 +1,6 @@
-// This is a simple solution with semaphores, that can result in a deadlock, it is a base for other, correct solutions
-//
+/*the max4 solution enables only n-1 philosophers to sit at the table (we have total of n philosophers), 
+this creates a situation, where one philosopher is guaranteed to have two chopsticks available for him */
+
 #include <stdio.h>
 #include <pthread.h>
 #include <stdlib.h>
@@ -14,12 +15,15 @@
 sem_t chopsticks[PHILOSOPHERS_NUM];
 pthread_t philosophers[PHILOSOPHERS_NUM];
 
+// we introduce a semaphore to track the philosophers that try to get chopsticks 
+sem_t queue;
+
 void pickup(int philosopher_num);
 void putdown(int philosopher_num);
 void* philosopher(void *params);
 int main(int argc, char* argcv[]);
 
-//the function exectes the think -> eat -> think... etc. routine. It uses random microseconds intervals
+// nothing changes compared to bad solution
 void* philosopher(void *params){
 
     int philosopher_num = *(int *) params;
@@ -28,12 +32,9 @@ void* philosopher(void *params){
     for (int i = 0; i < 100; i ++){
         __useconds_t think = rand() % 10 + 10;
         __useconds_t consume = rand() % 10 + 10;
-
-        // think and try to take chopsticks
+    
         usleep(think);
         pickup(philosopher_num);
-
-        // consume and release
         usleep(consume);
         putdown(philosopher_num);
 
@@ -41,47 +42,52 @@ void* philosopher(void *params){
     printf("\nPHILOSOPHER %i done\n", philosopher_num);
 
     return NULL;
-    }
+}
 
-//function that takes number of the philosopher and tries to obtain the chopsticks next to the philosopher 
+
 void pickup(int philosopher_num){
-    int left = philosopher_num % PHILOSOPHERS_NUM;
-    int right = (philosopher_num + 1) % PHILOSOPHERS_NUM;
-    sem_wait(&chopsticks[left]);            
-    sem_wait(&chopsticks[right]);
+    // we wait to get into the queue and start eating
+    sem_wait(&queue);
+    
+    sem_wait(&chopsticks[philosopher_num % PHILOSOPHERS_NUM]);            
+    sem_wait(&chopsticks[(philosopher_num + 1) % PHILOSOPHERS_NUM]);
 
 }
 
-//function that takes number of the philosopher and releases the chopsticks next to the philosopher 
 void putdown(int philosopher_num){
+
     sem_post(&chopsticks[philosopher_num]);
     sem_post(&chopsticks[(philosopher_num + 1) % PHILOSOPHERS_NUM]);
 
+    // we release the semaphore and "quit" the queue
+    sem_post(&queue);
 }
 
 int main(int argc, char* argcv[]){
 
-    //init chopstick semaphores
+    /* create a queue semaphore with initial value PHILOSOPHERS_NUM - 1, 
+    so that at most n - 1 philosophers can "eat" at once  */
+    sem_init(&queue, 0, PHILOSOPHERS_NUM - 1);
+
     for (int i = 0; i < PHILOSOPHERS_NUM; i++){
         sem_init(&chopsticks[i], 0, 1);
     }
 
-    // initialize threads and pass philosopher_num
     for (int i = 0; i < PHILOSOPHERS_NUM; i++){
         int *param = malloc(sizeof(int));
         *param = i;
         pthread_create(&philosophers[i], NULL, philosopher, param);
     }
 
-    // wait for all threads
     for (int i = 0; i < PHILOSOPHERS_NUM; i++){
         pthread_join(philosophers[i], NULL);
     }
 
-    // destroy all semaphores
     for (int i = 0; i < PHILOSOPHERS_NUM; i++){
         sem_destroy(&chopsticks[i]);
     }
+
+    sem_destroy(&queue);
 
     printf("\nPHILOSOPHERS done\n");
     return 0;

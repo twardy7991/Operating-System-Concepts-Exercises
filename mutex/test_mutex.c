@@ -1,6 +1,6 @@
 #include <pthread.h>
 #include <stdio.h>
-#include "my_mutex.h"
+#include <mymutex.h>
 
 #define COMPILER_BARRIER() asm volatile("" ::: "memory")
 #define single_sum 5000000
@@ -26,7 +26,7 @@ void* add(void* arg){
         release(pid);
         
     }
-    printf("my pid %i\n", pid);
+    printf("my pid %i\n done", pid);
     return NULL;
 }
 

@@ -22,6 +22,7 @@ int get_waiting(int i){
     return atomic_load(&waiting[i]);
 }
 
+
 void set_waiting_true(int i){
     int expected = 0;
     int desired = 1;
