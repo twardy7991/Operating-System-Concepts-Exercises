@@ -53,7 +53,7 @@ int main(int argc, char *argv[]){
         //printf("page number of %li = %i\n", addresses[i], (int)(addresses[i] & 0xFF00) >> 8);
         //printf("offset of %li = %i\n", addresses[i], (int)(addresses[i] & 0x00FF));
 
-        page_number = (addresses[i] & 0xFF00) >> 8;
+        page_number = (int)(addresses[i] & 0xFF00) >> 8;
         offset = (addresses[i] & 0x00FF);
 
         char value;
